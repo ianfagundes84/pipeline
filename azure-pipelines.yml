@@ -5,7 +5,7 @@ pool:
   vmImage: 'macOS-latest'
 
 variables:
-  scheme: 'Pipeline'
+  scheme: $scheme
   xcWorkspacePath: '$(Build.SourcesDirectory)/Pipeline.xcworkspace'
   IPA_NAME: 'Pipeline.ipa'
   APP_VERSION: '14'

@@ -25,13 +25,13 @@ steps:
     provisioningProfileLocation: 'secureFiles'
     provProfileSecureFile: 'appstorepipeline.mobileprovision'
 
-- script: |
-    pwd
-    ls -al
-    cd $(Build.SourcesDirectory)/Pipeline
-    pod update
-    pod install
-  displayName: 'CocoaPods install'
+# - script: |
+#     pwd
+#     ls -al
+#     cd $(Build.SourcesDirectory)/Pipeline
+#     pod update
+#     pod install
+#   displayName: 'CocoaPods install'
 
 - script: |
     rm -rf ~/Library/Developer/Xcode/DerivedData/

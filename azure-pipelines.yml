@@ -26,7 +26,7 @@ steps:
     provProfileSecureFile: 'appstorepipeline.mobileprovision'
 
 - script: |
-    cd $(Build.SourcesDirectory)
+    cd $(Build.SourcesDirectory)/Pipeline
     pod update
     pod install
   displayName: 'CocoaPods install'

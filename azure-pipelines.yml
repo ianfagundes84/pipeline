@@ -28,7 +28,7 @@ steps:
 - script: |
     pwd
     ls -al
-    cd $(Build.SourcesDirectory)/Pipeline/Pipeline
+    cd $(Build.SourcesDirectory)/Pipeline
     pod update
     pod install
   displayName: 'CocoaPods install'

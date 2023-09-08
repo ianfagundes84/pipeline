@@ -26,6 +26,8 @@ steps:
     provProfileSecureFile: 'appstorepipeline.mobileprovision'
 
 - script: |
+    pwd
+    ls -al
     cd $(Build.SourcesDirectory)/Pipeline/Pipeline
     pod update
     pod install

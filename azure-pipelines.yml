@@ -10,8 +10,16 @@ variables:
   IPA_NAME: 'Pipeline.ipa'
   APP_VERSION: '14'
 
+resources:
+  repositories:
+  - repository: Pipeline  # A name for the repository resource, can be anything
+    type: github
+    name: ianfagundes84/pipeline  
+    endpoint: MyGitHubServiceConnection  
+    ref: refs/heads/main
+
 steps:
-- checkout: self
+- checkout: Pipeline
 
 - task: InstallAppleCertificate@2
   inputs:

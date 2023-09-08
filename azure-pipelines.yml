@@ -79,7 +79,8 @@ steps:
         local max_retries=3
         while [ $retry_count -lt $max_retries ]
         do
-            xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD) && break
+            # xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD) && break
+            echo "xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD)" 
             retry_count=$((retry_count+1))
             echo "Retry $retry_count/$max_retries..."
             sleep 10

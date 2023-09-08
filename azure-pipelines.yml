@@ -15,7 +15,7 @@ resources:
   - repository: Pipeline  # A name for the repository resource, can be anything
     type: github
     name: ianfagundes84/pipeline  
-    endpoint: MyGitHubServiceConnection  
+    endpoint: ianfagundes84  
     ref: refs/heads/main
 
 steps:

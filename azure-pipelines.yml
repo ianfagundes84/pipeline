@@ -72,4 +72,8 @@ steps:
         /usr/libexec/PlistBuddy -c "Print CFBundleVersion" tempIPA_$target/Payload/$target.app/Info.plist
         echo "xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD)" 
     done
+
+        if ! /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$infoPlistPath"; then
+          /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $APP_VERSION" "$infoPlistPath"
+        fi
   displayName: 'Process and Upload Targets'

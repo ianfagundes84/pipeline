@@ -5,21 +5,29 @@ pool:
   vmImage: 'macOS-latest'
 
 variables:
-  scheme: $scheme
-  xcWorkspacePath: '$(Build.SourcesDirectory)/Pipeline.xcworkspace'
+  scheme: 'Pipeline'
+  xcWorkspacePath: '$(Build.SourcesDirectory)/Pipeline/Pipeline.xcworkspace'
   IPA_NAME: 'Pipeline.ipa'
-  APP_VERSION: '14'
+  APP_VERSION: '1'
 
 resources:
   repositories:
-  - repository: Pipeline  # A name for the repository resource, can be anything
+  - repository: Pipeline
     type: github
-    name: ianfagundes84/pipeline  
-    endpoint: ianfagundes84  
+    name: ianfagundes84/pipeline
+    endpoint: ianfagundes84
     ref: refs/heads/main
 
 steps:
 - checkout: Pipeline
+
+- script: |
+    ls -la $(Build.SourcesDirectory)
+  displayName: 'List project files'
+
+- script: |
+    ls -la $(Build.SourcesDirectory)/Pipeline
+  displayName: 'List files in Pipeline directory for diagnostic'
 
 - task: InstallAppleCertificate@2
   inputs:
@@ -33,76 +41,28 @@ steps:
     provisioningProfileLocation: 'secureFiles'
     provProfileSecureFile: 'appstorepipeline.mobileprovision'
 
-# - script: |
-#     pwd
-#     ls -al
-#     cd $(Build.SourcesDirectory)/Pipeline
-#     pod update
-#     pod install
-#   displayName: 'CocoaPods install'
-
 - script: |
     rm -rf ~/Library/Developer/Xcode/DerivedData/
     xcodebuild clean
   displayName: 'Clean Xcode data'
 
 - script: |
-    # Define functions
-    ensure_directory() {
-        local dir="$1"
-        local dir_name="$2"
-        mkdir -p "$dir"
-        chmod 755 "$dir"
-        if [ ! -d "$dir" ]; then
-            echo "Error: $dir_name directory not found or not writable!"
-            exit 1
-        fi
-    }
-
-    update_info_plist() {
-        local target="$1"
-        local infoPlistPath="$(Build.SourcesDirectory)/$target/Info.plist"
-        echo "---- Info.plist BEFORE any updates ----"
-        cat $infoPlistPath
-        chmod 644 $infoPlistPath
-        /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $(BUNDLE_ID)" $infoPlistPath
-        local current_version=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $infoPlistPath)
-        local new_version=$((APP_VERSION + 1))
-        /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $new_version" $infoPlistPath
-        echo "---- Info.plist AFTER updates ----"
-        cat $infoPlistPath
-    }
-
-    upload_app() {
-        local target="$1"
-        local retry_count=0
-        local max_retries=3
-        while [ $retry_count -lt $max_retries ]
-        do
-            # xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD) && break
-            echo "xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD)" 
-            retry_count=$((retry_count+1))
-            echo "Retry $retry_count/$max_retries..."
-            sleep 10
-        done
-        if [ $retry_count -eq $max_retries ]; then
-            echo "Failed to upload after $max_retries attempts. Exiting..."
-            exit 1
-        fi
-    }
-
-    # Main script execution
-    ensure_directory "$(Build.SourcesDirectory)/build/" "Archive"
-    ensure_directory "$(Build.ArtifactStagingDirectory)/" "Export"
+    # Ensure directories
+    mkdir -p "$(Build.SourcesDirectory)/build/"
+    chmod 755 "$(Build.SourcesDirectory)/build/"
+    mkdir -p "$(Build.ArtifactStagingDirectory)/"
+    chmod 755 "$(Build.ArtifactStagingDirectory)/"
+    
     for target in Pipeline 
     do
         echo "Processing target: $target"
-        update_info_plist "$target"
-        echo "Archiving $target..."
+        infoPlistPath="$(Build.SourcesDirectory)/$target/Info.plist"
+        chmod 644 $infoPlistPath
+        /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $(BUNDLE_ID)" $infoPlistPath || echo "Failed to set Bundle Identifier"
+        /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $APP_VERSION" "$infoPlistPath" || echo "Failed to set Bundle Version"
+        
         xcodebuild archive -workspace $(xcWorkspacePath) -scheme $target -archivePath $(Build.SourcesDirectory)/build/$target.xcarchive
-        echo "Exporting IPA for $target..."
-        rm -rf $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa
-        xcodebuild -exportArchive -archivePath $(Build.SourcesDirectory)/build/$target.xcarchive -exportOptionsPlist $(Build.SourcesDirectory)/ExportOptions.plist -exportPath $(Build.ArtifactStagingDirectory)/
+        xcodebuild -exportArchive -archivePath $(Build.SourcesDirectory)/build/$target.xcarchive -exportOptionsPlist $(Build.SourcesDirectory)/Pipeline/ExportOptions.plist -exportPath $(Build.ArtifactStagingDirectory)/
         if [ ! -f $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa ]; then
             echo "Error: IPA not found for target $target!"
             exit 1
@@ -110,6 +70,6 @@ steps:
         mkdir tempIPA_$target
         unzip $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa -d tempIPA_$target/
         /usr/libexec/PlistBuddy -c "Print CFBundleVersion" tempIPA_$target/Payload/$target.app/Info.plist
-        upload_app "$target"
+        echo "xcrun altool --upload-app --type ios --file $(Build.ArtifactStagingDirectory)/$IPA_NAME-$target.ipa --username $(APPLE_DEVELOPER_USERNAME) --password $(APPLE_DEVELOPER_PASSWORD)" 
     done
   displayName: 'Process and Upload Targets'
